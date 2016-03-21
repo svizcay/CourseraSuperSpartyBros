@@ -86,8 +86,19 @@ public class CharacterController2D : MonoBehaviour {
 		if (!playerCanMove || (Time.timeScale == 0f))
 			return;
 
+		if (_rigidbody.IsSleeping ()) {
+			Debug.Log ("object is now asleep");
+		} else {
+			Debug.Log ("object is now awake");
+		}
+
 		// determine horizontal velocity change based on the horizontal input
 		_vx = Input.GetAxisRaw ("Horizontal");
+		// float _vx2 = Input.GetAxis ("Horizontal");
+		// Debug.Log ("getAxisRaw " + _vx);
+		// Debug.Log ("getAxis " + _vx2);
+
+		// Debug.Log ("horizontal speed" + _vx);
 
 		// Determine if running based on the horizontal movement
 		if (_vx != 0) 
@@ -102,11 +113,12 @@ public class CharacterController2D : MonoBehaviour {
 
 		// get the current vertical velocity from the rigidbody component
 		_vy = _rigidbody.velocity.y;
+		// Debug.Log ("vertical speed" + _vy);
 
 		// Check to see if character is grounded by raycasting from the middle of the player
 		// down to the groundCheck position and see if collected with gameobjects on the
 		// whatIsGround layer
-		isGrounded = Physics2D.Linecast(_transform.position, groundCheck.position, whatIsGround);  
+		isGrounded = Physics2D.Linecast(_transform.position, groundCheck.position, whatIsGround); 
 
 		// Set the grounded animation states
 		_animator.SetBool("Grounded", isGrounded);
@@ -166,9 +178,10 @@ public class CharacterController2D : MonoBehaviour {
 	// so it will go for a ride on the MovingPlatform
 	void OnCollisionEnter2D(Collision2D other)
 	{
+		// Debug.Log ("collision with " + other.gameObject.tag);
 		if (other.gameObject.tag=="MovingPlatform")
 		{
-			this.transform.parent = other.transform;
+			// this.transform.parent = other.transform;
 		}
 	}
 

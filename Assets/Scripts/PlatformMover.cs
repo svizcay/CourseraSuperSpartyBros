@@ -16,6 +16,7 @@ public class PlatformMover : MonoBehaviour {
 	// private variables
 
 	Transform _transform;
+	Transform _transform2;
 	int _myWaypointIndex = 0;		// used as index for My_Waypoints
 	float _moveTime;
 	bool _moving = true;
