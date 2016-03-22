@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class CharacterController2D : MonoBehaviour {
 
@@ -46,6 +47,7 @@ public class CharacterController2D : MonoBehaviour {
 	bool facingRight = true;
 	bool isGrounded = false;
 	bool isRunning = false;
+	bool canDoubleJump = false;
 
 	// store the layer the player is on (setup in Awake)
 	int _playerLayer;
@@ -87,9 +89,9 @@ public class CharacterController2D : MonoBehaviour {
 			return;
 
 		if (_rigidbody.IsSleeping ()) {
-			Debug.Log ("object is now asleep");
+			// Debug.Log ("object is now asleep");
 		} else {
-			Debug.Log ("object is now awake");
+			// Debug.Log ("object is now awake");
 		}
 
 		// determine horizontal velocity change based on the horizontal input
@@ -120,17 +122,17 @@ public class CharacterController2D : MonoBehaviour {
 		// whatIsGround layer
 		isGrounded = Physics2D.Linecast(_transform.position, groundCheck.position, whatIsGround); 
 
+		if (isGrounded)
+			canDoubleJump = true;
+
 		// Set the grounded animation states
 		_animator.SetBool("Grounded", isGrounded);
 
-		if(isGrounded && Input.GetButtonDown("Jump")) // If grounded AND jump button pressed, then allow the player to jump
-		{
-			// reset current vertical motion to 0 prior to jump
-			_vy = 0f;
-			// add a force in the up direction
-			_rigidbody.AddForce (new Vector2 (0, jumpForce));
-			// play the jump sound
-			PlaySound(jumpSFX);
+		if (isGrounded && Input.GetButtonDown ("Jump")) { // If grounded AND jump button pressed, then allow the player to jump
+			DoJump ();
+		} else if (!isGrounded && Input.GetButtonDown ("Jump") && canDoubleJump) {
+			DoJump ();
+			canDoubleJump = false;
 		}
 	
 		// If the player stops jumping mid jump and player is not yet falling
@@ -181,7 +183,7 @@ public class CharacterController2D : MonoBehaviour {
 		// Debug.Log ("collision with " + other.gameObject.tag);
 		if (other.gameObject.tag=="MovingPlatform")
 		{
-			// this.transform.parent = other.transform;
+			this.transform.parent = other.transform;
 		}
 	}
 
@@ -248,10 +250,20 @@ public class CharacterController2D : MonoBehaviour {
 			yield return new WaitForSeconds(2.0f);
 
 			if (GameManager.gm) // if the gameManager is available, tell it to reset the game
-				GameManager.gm.ResetGame();
-			else // otherwise, just reload the current level
-				Application.LoadLevel(Application.loadedLevelName);
+				GameManager.gm.ResetGame ();
+			else { // otherwise, just reload the current level
+				// Application.LoadLevel (Application.loadedLevelName);
+				SceneManager.LoadScene (SceneManager.GetActiveScene().buildIndex);
+
+			}
 		}
+	}
+
+	IEnumerator Wait()
+	{
+		Debug.Log ("before wait");
+		yield return new WaitForSeconds(2.0f);
+		Debug.Log ("after wait");
 	}
 
 	public void CollectCoin(int amount) {
@@ -267,8 +279,13 @@ public class CharacterController2D : MonoBehaviour {
 		FreezeMotion ();
 		_animator.SetTrigger("Victory");
 
-		if (GameManager.gm) // do the game manager level compete stuff, if it is available
-			GameManager.gm.LevelCompete();
+		if (GameManager.gm) { // do the game manager level compete stuff, if it is available
+			GameManager.gm.LevelCompete ();
+		} else { // otherwise, just reload the current level
+			// Application.LoadLevel (Application.loadedLevelName);
+			StartCoroutine (Wait());
+			// SceneManager.LoadScene (SceneManager.GetActiveScene().buildIndex);
+		}
 	}
 
 	// public function to respawn the player at the appropriate location
@@ -278,5 +295,15 @@ public class CharacterController2D : MonoBehaviour {
 		_transform.parent = null;
 		_transform.position = spawnloc;
 		_animator.SetTrigger("Respawn");
+	}
+
+	void DoJump()
+	{
+		// reset current vertical motion to 0 prior to jump
+		_vy = 0f;
+		// add a force in the up direction
+		_rigidbody.AddForce (new Vector2 (0, jumpForce));
+		// play the jump sound
+		PlaySound(jumpSFX);
 	}
 }
